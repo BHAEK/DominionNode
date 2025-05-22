@@ -1,3 +1,6 @@
+#ifndef APP_H
+#define APP_H
+
 #include "stdint.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -10,14 +13,7 @@ typedef enum
     APP_STATE_INIT,
     APP_STATE_IDLE,
     // SETTINGS
-    APP_STATE_SETTINGS_CONTROL_POINT,
-    APP_STATE_SETTINGS_CP_ALPHA,
-    APP_STATE_SETTINGS_CP_BRAVO,
-    APP_STATE_SETTINGS_CP_CHARLIE,
-    APP_STATE_SETTINGS_CP_DELTA,
-    APP_STATE_SETTINGS_CP_ECHO,
-    APP_STATE_SETTINGS_CP_EXIT,
-    APP_STATE_SETTINGS_EXIT,
+    APP_STATE_SETTINGS,
     // RUNNING
     APP_STATE_RUNNING_BLUE,
     APP_STATE_RUNNING_RED,
@@ -51,5 +47,39 @@ typedef struct
 
 extern QueueHandle_t app_event_queue;
 
+
+/**
+ * @brief Converts an AppState_t value to a human-readable string.
+ *
+ * This function returns a string representation of the given application state.
+ * It is mainly used for logging and debugging purposes.
+ *
+ * @param state The application state to convert.
+ * @return A constant string describing the application state.
+ */
+const char * app_state_to_string(AppState_t state);
+
+/**
+ * @brief Converts an AppEvent_t value to a human-readable string.
+ *
+ * This function returns a string representation of the given application event.
+ * It is useful for logging and debugging to easily identify events.
+ *
+ * @param event The application event to convert.
+ * @return A constant string describing the application event.
+ */
+const char * app_event_to_string(AppEvent_t event);
+
 void app_task(void* arg);
+
+/**
+ * @brief Returns the current application state.
+ *
+ * This function provides read-only access to the current state of the application
+ * state machine. It can be used by external modules for monitoring or decision making.
+ *
+ * @return The current AppState_t value representing the application's state.
+ */
 AppState_t get_app_state(void);
+
+#endif //APP_H

@@ -16,7 +16,7 @@ esp_err_t storage_init(void)
 
 esp_err_t storage_set_control_point(ControlPoint_t control_point)
 {
-    if (control_point <= CONTROL_POINT_NONE || control_point >= CONTROL_POINT_MAX)
+    if (control_point <= CONTROL_POINT_NONE || control_point >= CONTROL_POINT_COUNT)
         return ESP_ERR_INVALID_ARG;
 
     nvs_handle_t handle;
@@ -45,7 +45,7 @@ esp_err_t storage_get_control_point(ControlPoint_t * control_point)
 
     if (err == ESP_OK)
     {
-        if (val < CONTROL_POINT_MAX)
+        if (val < CONTROL_POINT_COUNT)
         {
             *control_point = (ControlPoint_t)val;
         }
@@ -56,18 +56,4 @@ esp_err_t storage_get_control_point(ControlPoint_t * control_point)
     }
 
     return err;
-}
-
-const char *control_point_to_string(ControlPoint_t control_point) 
-{
-    switch (control_point) 
-    {
-        case CONTROL_POINT_ALPHA:   return "Alpha";
-        case CONTROL_POINT_BRAVO:   return "Bravo";
-        case CONTROL_POINT_CHARLIE: return "Charlie";
-        case CONTROL_POINT_DELTA:   return "Delta";
-        case CONTROL_POINT_ECHO:    return "Echo";
-        case CONTROL_POINT_NONE:    return "None";
-        default:                    return "Unknown";
-    }
 }

@@ -1,3 +1,6 @@
+#ifndef LEDS_H
+#define LEDS_H
+
 #include "config.h"
 #include "esp_err.h"
 
@@ -15,3 +18,5 @@ esp_err_t turn_led_on(led_t led);
 esp_err_t turn_led_off(led_t led);
 esp_err_t turn_all_leds_on();
 esp_err_t turn_all_leds_off();
+
+#endif // LEDS_H

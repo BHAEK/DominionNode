@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BUTTONS_H
+#define BUTTONS_H
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
@@ -14,3 +15,5 @@
 extern EventGroupHandle_t button_event_group;
 esp_err_t button_init();
 void button_task(void* arg);
+
+#endif // BUTTONS_H

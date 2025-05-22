@@ -6,6 +6,7 @@
 #include "leds.h"
 #include "chrono.h"
 #include "storage.h"
+#include "settings.h"
 
 QueueHandle_t app_event_queue = NULL;
 TimerHandle_t initial_setup_timer = NULL;
@@ -16,6 +17,18 @@ AppState_t current_state = APP_STATE_INIT;
 Chrono_t blue_chrono = CHRONO_DEFAULT();
 Chrono_t red_chrono = CHRONO_DEFAULT();
 
+/**
+ * @brief Timer callback for the initial setup phase.
+ *
+ * This function is triggered by a software or hardware timer to signal that
+ * the initial setup period has elapsed. It creates an event of type
+ * APP_EVENT_TMR_INIT_SETUP and enqueues it into the application's event queue.
+ *
+ * The event is sent asynchronously using xQueueSend. If the queue is full,
+ * the function will wait up to APP_EVENT_ENQUEUE_TIMEOUT_MS milliseconds.
+ *
+ * @note This function is intended to be used as a FreeRTOS timer callback.
+ */
 void initial_setup_timer_callback();
 
 AppState_t get_app_state(void)
@@ -170,8 +183,9 @@ void app_task(void* arg)
                             {
                                 xTimerStop(initial_setup_timer, 0);
                             }
-                            current_state = APP_STATE_SETTINGS_CONTROL_POINT;
-                            ESP_LOGI(__func__, "SETTINGS - CONTROL POINT");
+                            current_state = APP_STATE_SETTINGS;
+                            settings_init();
+                            ESP_LOGI(__func__, "ENTERED SETTINGS");
                             break;
                         }
 
@@ -603,7 +617,7 @@ void app_task(void* arg)
 
                 }
 
-                case APP_STATE_SETTINGS_CONTROL_POINT:
+                case APP_STATE_SETTINGS:
                 {
                     switch (event.type)
                     {
@@ -612,7 +626,7 @@ void app_task(void* arg)
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
                             ESP_LOGI(__func__, "Blue short press");
-                            current_state = APP_STATE_SETTINGS_EXIT;
+                            settings_next();
                             break;
                         }
                         
@@ -634,7 +648,16 @@ void app_task(void* arg)
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
                             ESP_LOGI(__func__, "Red short press");
-                            current_state = APP_STATE_SETTINGS_CP_ALPHA;
+                            if (settings_get_current() == SETTING_EXIT) 
+                            {
+                                settings_save();
+                                current_state = APP_STATE_IDLE;
+                                ESP_LOGI(__func__, "EXITED SETTINGS");
+                            } 
+                            else 
+                            {
+                                settings_modify_current();
+                            }
                             break;
                         }
                         
@@ -662,8 +685,7 @@ void app_task(void* arg)
                         case APP_EVENT_BTN_BOTH_MEDIUM:
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Both medium press");                            
-                            current_state = APP_STATE_IDLE;
+                            ESP_LOGI(__func__, "Both medium press");
                             break;
                         }
                         
@@ -671,7 +693,6 @@ void app_task(void* arg)
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
                             ESP_LOGI(__func__, "Both long press");
-                            current_state = APP_STATE_IDLE;
                             break;
                         }
 
@@ -689,7 +710,7 @@ void app_task(void* arg)
 
                 default:
                 {
-                    ESP_LOGE(__func__, "UNEXPECTED TRANSITION! WRONG STATE, EVENT: %d, %d", current_state, event.type);
+                    ESP_LOGE(__func__, "UNEXPECTED TRANSITION! WRONG STATE, EVENT: %s, %s", app_state_to_string(current_state), app_event_to_string(event.type));
                     break;
                 }
                     
@@ -706,4 +727,61 @@ void initial_setup_timer_callback()
     AppEventMessage_t event;
     event.type = APP_EVENT_TMR_INIT_SETUP;
     xQueueSend(app_event_queue, &event, APP_EVENT_ENQUEUE_TIMEOUT_MS);
+}
+
+const char * app_state_to_string(AppState_t state)
+{
+    switch (state)
+    {
+        case APP_STATE_INIT:
+            return "INIT";
+        case APP_STATE_IDLE:
+            return "IDLE";
+        case APP_STATE_SETTINGS:
+            return "SETTINGS";
+        case APP_STATE_RUNNING_BLUE:
+            return "RUNNING_BLUE";
+        case APP_STATE_RUNNING_RED:
+            return "RUNNING_RED";
+        case APP_STATE_FINISHED:
+            return "FINISHED";
+        default:
+            return "UNKNOWN_STATE";
+    }
+}
+
+const char * app_event_to_string(AppEvent_t event)
+{
+    switch (event)
+    {
+        // TIMERS
+        case APP_EVENT_TMR_INIT_SETUP:
+            return "TMR_INIT_SETUP";
+
+        // BUTTON PRESSION
+        case APP_EVENT_BTN_RED_SHORT:
+            return "BTN_RED_SHORT";
+        case APP_EVENT_BTN_RED_MEDIUM:
+            return "BTN_RED_MEDIUM";
+        case APP_EVENT_BTN_RED_LONG:
+            return "BTN_RED_LONG";
+
+        case APP_EVENT_BTN_BLUE_SHORT:
+            return "BTN_BLUE_SHORT";
+        case APP_EVENT_BTN_BLUE_MEDIUM:
+            return "BTN_BLUE_MEDIUM";
+        case APP_EVENT_BTN_BLUE_LONG:
+            return "BTN_BLUE_LONG";
+
+        case APP_EVENT_BTN_BOTH_SHORT:
+            return "BTN_BOTH_SHORT";
+        case APP_EVENT_BTN_BOTH_MEDIUM:
+            return "BTN_BOTH_MEDIUM";
+        case APP_EVENT_BTN_BOTH_LONG:
+            return "BTN_BOTH_LONG";
+
+        // Fallback
+        default:
+            return "UNKNOWN_EVENT";
+    }
 }

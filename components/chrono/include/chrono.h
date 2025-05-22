@@ -1,3 +1,6 @@
+#ifndef CHRONO_H
+#define CHRONO_H
+
 #include "stdint.h"
 #include "stdbool.h"
 
@@ -70,3 +73,5 @@ void chrono_reset(Chrono_t *chrono);
  * @return Total elapsed time in seconds.
  */
 int chrono_get_seconds(Chrono_t *chrono);
+
+#endif //CHRONO_H

@@ -1,0 +1,22 @@
+
+// GPIO PINS
+#define GPIO_LED_RED     19
+#define GPIO_LED_BLUE    18
+#define GPIO_BTN_RED     5
+#define GPIO_BTN_BLUE    4
+
+// GENERIC
+#define DEBOUNCE_DELAY_MS       200
+#define SETTINGS_HOLD_TIME_MS   3000
+
+// EVENT BITS
+#define BTN_RED_EVENT   (1 << 0)
+#define BTN_BLUE_EVENT  (1 << 1)
+
+// TASKS STACK DEPTH
+#define BUTTON_TASK_STACK_DEPTH     2048
+#define APP_TASK_STACK_DEPTH        2048
+
+// TASK PRIORITY
+#define BUTTON_TASK_PRIORITY        5
+#define APP_TASK_PRIORITY           3

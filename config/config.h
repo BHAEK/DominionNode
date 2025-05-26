@@ -5,6 +5,9 @@
 #define GPIO_BTN_RED     5
 #define GPIO_BTN_BLUE    4
 
+#define GPIO_7SEG_RED_CLK   32
+#define GPIO_7SEG_RED_SDO   33
+
 // GENERIC
 #define DEBOUNCE_DELAY_MS       200
 #define SETTINGS_HOLD_TIME_MS   3000

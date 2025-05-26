@@ -27,6 +27,7 @@
 #include "buttons.h"
 #include "app.h"
 #include "storage.h"
+#include "tm1637.h"
 
 esp_err_t app_init()
 {
@@ -71,6 +72,11 @@ esp_err_t app_init()
         ESP_LOGI(__func__, "STORAGE INIT OK");
     }
 
+    tm1637_led_t * red_7seg;
+    red_7seg = tm1637_init(GPIO_7SEG_RED_CLK, GPIO_7SEG_RED_SDO);
+    tm1637_set_number(red_7seg, 1234, false, 0);
+
+    
     if(error)
     {
         ESP_LOGE(__func__, "Error initializing the app");

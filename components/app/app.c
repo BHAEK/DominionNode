@@ -7,9 +7,11 @@
 #include "chrono.h"
 #include "storage.h"
 #include "settings.h"
+#include "display.h"
 
 QueueHandle_t app_event_queue = NULL;
 TimerHandle_t initial_setup_timer = NULL;
+TaskHandle_t display_task_handle = NULL;
 
 // GAME VARIABLES
 ControlPoint_t control_point = CONTROL_POINT_NONE;
@@ -31,12 +33,15 @@ Chrono_t red_chrono = CHRONO_DEFAULT();
  */
 void initial_setup_timer_callback();
 
+void display_task(void * arg);
+void app_task(void * arg);
+
 AppState_t get_app_state(void)
 {
     return current_state;
 }
 
-void app_task(void* arg)
+void app_task(void * arg)
 {
     
     current_state = APP_STATE_INIT;
@@ -90,88 +95,35 @@ void app_task(void* arg)
                     {
                         
                         case APP_EVENT_BTN_BLUE_SHORT:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Blue short press");
-                            if(initial_setup_timer)
-                            {
-                                xTimerStop(initial_setup_timer, 0);
-                            }
-                            current_state = APP_STATE_IDLE;
-                            break;
-                        }
-                        
+                        case APP_EVENT_BTN_RED_SHORT:
                         case APP_EVENT_BTN_BLUE_MEDIUM:
+                        case APP_EVENT_BTN_RED_MEDIUM:
+                        case APP_EVENT_BTN_BOTH_SHORT:
+                        case APP_EVENT_BTN_BOTH_MEDIUM:
+                        case APP_EVENT_TMR_INIT_SETUP:
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Blue medium press");
-                            current_state = APP_STATE_IDLE;
                             if(initial_setup_timer)
                             {
                                 xTimerStop(initial_setup_timer, 0);
                             }
+                            current_state = APP_STATE_IDLE;                            
+                            display_set_time(DISPLAY_RED, 0, true);
+                            display_set_time(DISPLAY_BLUE, 0, true);
                             break;
                         }
-                        
+                                             
                         case APP_EVENT_BTN_BLUE_LONG:
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
                             ESP_LOGI(__func__, "Blue long press");
                             break;
                         }
-                        
-                        case APP_EVENT_BTN_RED_SHORT:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Red short press");
-                            current_state = APP_STATE_IDLE;
-                            if(initial_setup_timer)
-                            {
-                                xTimerStop(initial_setup_timer, 0);
-                            }
-                            break;
-                        }
-                        
-                        case APP_EVENT_BTN_RED_MEDIUM:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Red medium press");
-                            current_state = APP_STATE_IDLE;
-                            if(initial_setup_timer)
-                            {
-                                xTimerStop(initial_setup_timer, 0);
-                            }
-                            break;
-                        }
-                        
+                                                
                         case APP_EVENT_BTN_RED_LONG:
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
                             ESP_LOGI(__func__, "Red long press");
-                            break;
-                        }
-                        
-                        case APP_EVENT_BTN_BOTH_SHORT:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Both short press");
-                            current_state = APP_STATE_IDLE;
-                            if(initial_setup_timer)
-                            {
-                                xTimerStop(initial_setup_timer, 0);
-                            }
-                            break;
-                        }
-                        
-                        case APP_EVENT_BTN_BOTH_MEDIUM:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Both medium press");
-                            current_state = APP_STATE_IDLE;
-                            if(initial_setup_timer)
-                            {
-                                xTimerStop(initial_setup_timer, 0);
-                            }
                             break;
                         }
                         
@@ -186,14 +138,6 @@ void app_task(void* arg)
                             current_state = APP_STATE_SETTINGS;
                             settings_init();
                             ESP_LOGI(__func__, "ENTERED SETTINGS");
-                            break;
-                        }
-
-                        case APP_EVENT_TMR_INIT_SETUP:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Init setup timer expired! Entering APP_STATE_IDLE...");
-                            current_state = APP_STATE_IDLE;
                             break;
                         }
 
@@ -216,6 +160,7 @@ void app_task(void* arg)
                     {
                         
                         case APP_EVENT_BTN_BLUE_SHORT:
+                        case APP_EVENT_BTN_BLUE_MEDIUM:
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
                             ESP_LOGI(__func__, "Blue short press");
@@ -224,18 +169,18 @@ void app_task(void* arg)
                             chrono_stop(&red_chrono);
                             turn_led_on(BLUE_LED);
                             turn_led_off(RED_LED);
-                            break;
-                        }
-                        
-                        case APP_EVENT_BTN_BLUE_MEDIUM:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Blue medium press");
-                            current_state = APP_STATE_RUNNING_BLUE;
-                            chrono_start(&blue_chrono);
-                            chrono_stop(&red_chrono);
-                            turn_led_on(BLUE_LED);
-                            turn_led_off(RED_LED);
+                            if(!display_task_handle)
+                            {
+                                BaseType_t display_task_error = xTaskCreate(display_task, "display", DISPLAY_TASK_STACK_DEPTH, NULL, DISPLAY_TASK_PRIORITY, &display_task_handle);
+                                if(pdPASS != display_task_error)
+                                {
+                                    ESP_LOGE(__func__, "Error creating display task!");
+                                }
+                            }
+                            else
+                            {
+                                vTaskResume(display_task_handle);
+                            }
                             break;
                         }
                         
@@ -247,6 +192,7 @@ void app_task(void* arg)
                         }
                         
                         case APP_EVENT_BTN_RED_SHORT:
+                        case APP_EVENT_BTN_RED_MEDIUM:
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
                             ESP_LOGI(__func__, "Red short press");
@@ -255,18 +201,18 @@ void app_task(void* arg)
                             chrono_start(&red_chrono);
                             turn_led_off(BLUE_LED);
                             turn_led_on(RED_LED);
-                            break;
-                        }
-                        
-                        case APP_EVENT_BTN_RED_MEDIUM:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Red medium press");
-                            current_state = APP_STATE_RUNNING_RED;
-                            chrono_stop(&blue_chrono);
-                            chrono_start(&red_chrono);
-                            turn_led_off(BLUE_LED);
-                            turn_led_on(RED_LED);
+                            if(!display_task_handle)
+                            {
+                                BaseType_t display_task_error = xTaskCreate(display_task, "display", DISPLAY_TASK_STACK_DEPTH, NULL, DISPLAY_TASK_PRIORITY, &display_task_handle);
+                                if(pdPASS != display_task_error)
+                                {
+                                    ESP_LOGE(__func__, "Error creating display task!");
+                                }
+                            }
+                            else
+                            {
+                                vTaskResume(display_task_handle);
+                            }
                             break;
                         }
                         
@@ -376,6 +322,7 @@ void app_task(void* arg)
                         }
                         
                         case APP_EVENT_BTN_BOTH_MEDIUM:
+                        case APP_EVENT_BTN_BOTH_LONG:
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
                             ESP_LOGI(__func__, "Both medium press");
@@ -383,22 +330,10 @@ void app_task(void* arg)
                             chrono_stop(&blue_chrono);
                             chrono_stop(&red_chrono);
                             turn_all_leds_on();
-                            int blue_seconds = chrono_get_seconds(&blue_chrono);
-                            int red_seconds = chrono_get_seconds(&red_chrono);
-                            ESP_LOGI(__func__, "BLUE TEAM: %ds", blue_seconds);
-                            ESP_LOGI(__func__, "RED TEAM:  %ds", red_seconds);
-                            ESP_LOGI(__func__, "WIN %s TEAM!", blue_seconds >= red_seconds ? "BLUE" : "RED");
-                            break;
-                        }
-                        
-                        case APP_EVENT_BTN_BOTH_LONG:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Both long press");
-                            current_state = APP_STATE_FINISHED;
-                            chrono_stop(&blue_chrono);
-                            chrono_stop(&red_chrono);
-                            turn_all_leds_on();
+                            if(display_task_handle)
+                            {
+                                vTaskSuspend(display_task_handle);
+                            }
                             int blue_seconds = chrono_get_seconds(&blue_chrono);
                             int red_seconds = chrono_get_seconds(&red_chrono);
                             ESP_LOGI(__func__, "BLUE TEAM: %ds", blue_seconds);
@@ -485,6 +420,7 @@ void app_task(void* arg)
                         }
                         
                         case APP_EVENT_BTN_BOTH_MEDIUM:
+                        case APP_EVENT_BTN_BOTH_LONG:
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
                             ESP_LOGI(__func__, "Both medium press");
@@ -492,6 +428,10 @@ void app_task(void* arg)
                             chrono_stop(&blue_chrono);
                             chrono_stop(&red_chrono);
                             turn_all_leds_on();
+                            if(display_task_handle)
+                            {
+                                vTaskSuspend(display_task_handle);
+                            }
                             int blue_seconds = chrono_get_seconds(&blue_chrono);
                             int red_seconds = chrono_get_seconds(&red_chrono);
                             ESP_LOGI(__func__, "BLUE TEAM: %ds", blue_seconds);
@@ -500,22 +440,6 @@ void app_task(void* arg)
                             break;
                         }
                         
-                        case APP_EVENT_BTN_BOTH_LONG:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Both long press");
-                            current_state = APP_STATE_FINISHED;
-                            chrono_stop(&blue_chrono);
-                            chrono_stop(&red_chrono);
-                            turn_all_leds_on();
-                            int blue_seconds = chrono_get_seconds(&blue_chrono);
-                            int red_seconds = chrono_get_seconds(&red_chrono);
-                            ESP_LOGI(__func__, "BLUE TEAM: %ds", blue_seconds);
-                            ESP_LOGI(__func__, "RED TEAM:  %ds", red_seconds);
-                            ESP_LOGI(__func__, "WIN %s TEAM!", blue_seconds >= red_seconds ? "BLUE" : "RED");
-                            break;
-                        }
-
                         default:
                         {
                             ESP_LOGE(__func__, "UNEXPECTED TRANSITION! STATE, WRONG EVENT: %d, %d", current_state, event.type);
@@ -584,6 +508,7 @@ void app_task(void* arg)
                         }
                         
                         case APP_EVENT_BTN_BOTH_MEDIUM:
+                        case APP_EVENT_BTN_BOTH_LONG:
                         {
                             ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
                             ESP_LOGI(__func__, "Both medium press");
@@ -591,17 +516,8 @@ void app_task(void* arg)
                             chrono_reset(&blue_chrono);
                             chrono_reset(&red_chrono);
                             turn_all_leds_off();
-                            break;
-                        }
-                        
-                        case APP_EVENT_BTN_BOTH_LONG:
-                        {
-                            ESP_LOGI(__func__, "STATE, EVENT: %d, %d", current_state, event.type);
-                            ESP_LOGI(__func__, "Both long press");
-                            current_state = APP_STATE_IDLE;
-                            chrono_reset(&blue_chrono);
-                            chrono_reset(&red_chrono);
-                            turn_all_leds_off();
+                            display_set_time(DISPLAY_RED, 0, true);
+                            display_set_time(DISPLAY_BLUE, 0, true);
                             break;
                         }
 
@@ -717,6 +633,24 @@ void app_task(void* arg)
             }
         
         }
+    
+    }
+
+}
+
+void display_task(void * arg)
+{
+
+    bool colon = false;
+
+    while(true)
+    {
+
+        display_set_time(DISPLAY_RED, chrono_get_seconds(&red_chrono), colon);
+        display_set_time(DISPLAY_BLUE, chrono_get_seconds(&blue_chrono), colon);
+        colon = !colon;
+
+        vTaskDelay(pdMS_TO_TICKS(DISPLAY_REFRESH_RATE_MS));
     
     }
 

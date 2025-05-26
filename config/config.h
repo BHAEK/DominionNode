@@ -5,8 +5,10 @@
 #define GPIO_BTN_RED     5
 #define GPIO_BTN_BLUE    4
 
-#define GPIO_7SEG_RED_CLK   32
-#define GPIO_7SEG_RED_SDO   33
+#define GPIO_7SEG_RED_CLK   13
+#define GPIO_7SEG_RED_SDO   14
+#define GPIO_7SEG_BLUE_CLK  15
+#define GPIO_7SEG_BLUE_SDO  16
 
 // GENERIC
 #define DEBOUNCE_DELAY_MS       200
@@ -19,7 +21,9 @@
 // TASKS STACK DEPTH
 #define BUTTON_TASK_STACK_DEPTH     2048
 #define APP_TASK_STACK_DEPTH        2048
+#define DISPLAY_TASK_STACK_DEPTH    2048
 
 // TASK PRIORITY
 #define BUTTON_TASK_PRIORITY        5
 #define APP_TASK_PRIORITY           3
+#define DISPLAY_TASK_PRIORITY       3

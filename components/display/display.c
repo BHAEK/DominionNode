@@ -4,7 +4,9 @@
 #include "config.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
+#include "string.h"
 
+#define TM1637_AUTO_DELAY 300000
 
 static tm1637_led_t * display_red;
 static tm1637_led_t * display_blue;
@@ -167,6 +169,143 @@ esp_err_t display_set_time(Display_t display, int seconds, bool colon)
     tm1637_set_segment_fixed(led, 1, seg2);
     tm1637_set_segment_fixed(led, 2, seg3);
     tm1637_set_segment_fixed(led, 3, seg4);
+
+    return ESP_OK;
+
+}
+
+esp_err_t display_set_string(Display_t display, char * string)
+{
+    
+    if (string == NULL) 
+    {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    tm1637_led_t *led = NULL;
+
+    switch (display) 
+    {
+        
+        case DISPLAY_RED:
+        {
+            if (display_red == NULL)
+            {
+                ESP_LOGE(__func__, "Display (RED) not initialized!");
+                return ESP_FAIL;
+            }
+
+            led = display_red;
+            
+            break;
+        }
+
+        case DISPLAY_BLUE:
+        {
+            if (display_blue == NULL)
+            {
+                ESP_LOGE(__func__, "Display (BLUE) not initialized!");
+                return ESP_FAIL;
+            }
+
+            led = display_blue;
+            
+            break;
+        }
+
+        default:
+        {
+            ESP_LOGE(__func__, "Invalid DISPLAY: %d", display);
+            return ESP_ERR_INVALID_ARG;
+        }
+    
+    }
+
+    tm1637_set_segment_ascii(led, string);
+    
+    return ESP_OK;
+
+}
+
+esp_err_t display_set_string_dual(char * string)
+{
+
+    if (string == NULL)
+    {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    if (display_red == NULL || display_blue == NULL)
+    {
+        ESP_LOGE(__func__, "One or both displays not initialized! red=%p blue=%p", display_red, display_blue);
+        return ESP_FAIL;
+    }
+
+    const int red_len = display_red->segment_max;
+    const int blue_len = display_blue->segment_max;
+    const int total_len = red_len + blue_len;
+
+    char padded[16] = {0}; // up to 15 + null terminator
+    int input_len = strlen(string);
+
+    if (input_len <= total_len)
+    {
+        
+        // Left-align string in full display
+        memset(padded, 0x20, total_len);
+        strncpy(padded, string, total_len);
+
+        char red_text[8] = {0};
+        char blue_text[8] = {0};
+
+        strncpy(red_text, padded, red_len);
+        strncpy(blue_text, padded + red_len, blue_len);
+
+        tm1637_set_segment_ascii(display_red, red_text);
+        tm1637_set_segment_ascii(display_blue, blue_text);
+    
+    }
+    else
+    {
+        // Scroll text across both displays
+        uint8_t segments[8] = {0};
+        for (int i = 0; i < input_len; i++)
+        {
+            
+            // shift left
+            for (int j = 0; j < 7; j++)
+            {
+                segments[j] = segments[j+1];
+            }
+
+            int c = string[i];
+            segments[7] = ascii_symbols[c];
+
+            tm1637_set_segment_auto(display_red, segments, 4);
+            tm1637_set_segment_auto(display_blue, segments + 4, 4);
+
+            vTaskDelay(pdMS_TO_TICKS(TM1637_AUTO_DELAY / 1000));
+        
+        }
+
+        // Clear out scroll
+        for (int i = 0; i < 8; i++)
+        {
+            
+            for (int j = 0; j < 7; j++)
+            {
+                segments[j] = segments[j+1];
+            }
+            segments[7] = 0;
+
+            tm1637_set_segment_auto(display_red, segments, 4);
+            tm1637_set_segment_auto(display_blue, segments + 4, 4);
+
+            vTaskDelay(pdMS_TO_TICKS(TM1637_AUTO_DELAY / 1000));
+        
+        }
+    
+    }
 
     return ESP_OK;
 

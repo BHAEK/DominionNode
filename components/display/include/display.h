@@ -86,5 +86,33 @@ esp_err_t display_set_brightness(Display_t display, DisplayBrightness_t brightne
  */
 esp_err_t display_set_time(Display_t display, int seconds, bool colon);
 
+/**
+ * @brief Displays a string on the specified 7-segment display.
+ *
+ * This function uses the ASCII segment function to show a string on the TM1637-based display.
+ * If the string is longer than the display width, it will scroll automatically.
+ *
+ * @param display The target display (DISPLAY_RED or DISPLAY_BLUE).
+ * @param string The null-terminated string to display.
+ * @return esp_err_t
+ *         - ESP_OK: Successfully updated the display.
+ *         - ESP_ERR_INVALID_ARG: The display is invalid or the string is NULL.
+ *         - ESP_FAIL: The corresponding display is not initialized (NULL pointer).
+ */
+esp_err_t display_set_string(Display_t display, char * string);
 
+/**
+ * @brief Displays a string across both RED and BLUE displays as if they are concatenated.
+ *
+ * This function assumes that the RED display comes first and the BLUE display follows.
+ * If the string is shorter than the combined length, it will be right-aligned.
+ * If longer, it will scroll across the combined 8 digits.
+ *
+ * @param string Null-terminated string to display.
+ * @return esp_err_t
+ *         - ESP_OK: Displayed successfully.
+ *         - ESP_ERR_INVALID_ARG: Null pointer passed.
+ *         - ESP_FAIL: One or both displays are not initialized.
+ */
+esp_err_t display_set_string_dual(char * string);
 #endif // DISPLAY_H

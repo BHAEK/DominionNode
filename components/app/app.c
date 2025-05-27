@@ -641,14 +641,21 @@ void app_task(void * arg)
 void display_task(void * arg)
 {
 
-    bool colon = false;
+    int seconds_red = chrono_get_seconds(&red_chrono);
+    int seconds_blue = chrono_get_seconds(&blue_chrono);
 
     while(true)
     {
-
-        display_set_time(DISPLAY_RED, chrono_get_seconds(&red_chrono), colon);
-        display_set_time(DISPLAY_BLUE, chrono_get_seconds(&blue_chrono), colon);
-        colon = !colon;
+        
+        if(seconds_red != chrono_get_seconds(&red_chrono))
+        {
+            display_set_time(DISPLAY_RED, chrono_get_seconds(&red_chrono), true);
+        }
+        
+        if(seconds_blue != chrono_get_seconds(&blue_chrono))
+        {
+            display_set_time(DISPLAY_BLUE, chrono_get_seconds(&blue_chrono), true);
+        }
 
         vTaskDelay(pdMS_TO_TICKS(DISPLAY_REFRESH_RATE_MS));
     

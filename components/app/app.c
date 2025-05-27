@@ -568,7 +568,9 @@ void app_task(void * arg)
                             {
                                 settings_save();
                                 current_state = APP_STATE_IDLE;
-                                ESP_LOGI(__func__, "EXITED SETTINGS");
+                                ESP_LOGI(__func__, "EXITED SETTINGS");                                                            
+                                display_set_time(DISPLAY_RED, 0, true);
+                                display_set_time(DISPLAY_BLUE, 0, true);
                             } 
                             else 
                             {

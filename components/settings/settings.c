@@ -1,6 +1,7 @@
 #include "settings.h"
 #include "storage.h"
 #include "esp_log.h"
+#include "display.h"
 
 static SettingType_t current_setting_type;
 static Setting_t setting;
@@ -43,11 +44,51 @@ const char * control_point_to_string(ControlPoint_t control_point)
     }
 }
 
+const char * setting_type_to_short_string(SettingType_t setting)
+{
+    switch (setting)
+    {
+        case SETTING_CONTROL_POINT:
+            return "CP";     // Control Point
+        case SETTING_EXIT:
+            return "EXIT";
+        case SETTING_COUNT:
+            return "CNT";    // Count
+        default:
+            return "UNK";    // Unknown
+    }
+}
+
+const char * control_point_to_short_string(ControlPoint_t control_point)
+{
+    switch (control_point)
+    {
+        case CONTROL_POINT_NONE:
+            return "NONE";
+        case CONTROL_POINT_ALPHA:
+            return "A";
+        case CONTROL_POINT_BRAVO:
+            return "B";
+        case CONTROL_POINT_CHARLIE:
+            return "C";
+        case CONTROL_POINT_DELTA:
+            return "D";
+        case CONTROL_POINT_ECHO:
+            return "E";
+        case CONTROL_POINT_COUNT:
+            return "CNT";
+        default:
+            return "UNK";
+    }
+}
+
 void settings_init(void) 
 {
     current_setting_type = SETTING_CONTROL_POINT;
     settings_load();
     ESP_LOGI(__func__, "Actual setting: %s", setting_type_to_string(current_setting_type));
+    display_set_string(DISPLAY_RED, setting_type_to_short_string(current_setting_type));
+    display_set_string(DISPLAY_BLUE, control_point_to_short_string(setting.control_point));
 }
 
 esp_err_t settings_load(void)
@@ -90,6 +131,7 @@ void settings_next(void)
     
     current_setting_type = (current_setting_type + 1) % SETTING_COUNT;
     ESP_LOGI(__func__, "Actual setting: %s", setting_type_to_string(current_setting_type));
+    display_set_string(DISPLAY_RED, setting_type_to_short_string(current_setting_type));
     
     switch (current_setting_type)
     {
@@ -97,6 +139,7 @@ void settings_next(void)
         case SETTING_CONTROL_POINT:
         {
             ESP_LOGI(__func__, "Actual value: %s", control_point_to_string(setting.control_point));
+            display_set_string(DISPLAY_BLUE, control_point_to_short_string(setting.control_point));
             break;
         }
         
@@ -119,6 +162,7 @@ void settings_modify_current(void)
         {
             setting.control_point = (setting.control_point + 1) % CONTROL_POINT_COUNT;
             ESP_LOGI(__func__, "Actual value: %s", control_point_to_string(setting.control_point));
+            display_set_string(DISPLAY_BLUE, control_point_to_short_string(setting.control_point));
             break;
         }
 

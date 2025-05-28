@@ -12,33 +12,12 @@ const char * setting_type_to_string(SettingType_t setting)
     {
         case SETTING_CONTROL_POINT:
             return "SETTING_CONTROL_POINT";
+        case SETTING_BEEP:
+            return "SETTING_BEEP";
         case SETTING_EXIT:
             return "SETTING_EXIT";
         case SETTING_COUNT:
             return "SETTING_COUNT";
-        default:
-            return "UNKNOWN";
-    }
-}
-
-const char * control_point_to_string(ControlPoint_t control_point)
-{
-    switch (control_point)
-    {
-        case CONTROL_POINT_NONE:
-            return "CONTROL_POINT_NONE";
-        case CONTROL_POINT_ALPHA:
-            return "CONTROL_POINT_ALPHA";
-        case CONTROL_POINT_BRAVO:
-            return "CONTROL_POINT_BRAVO";
-        case CONTROL_POINT_CHARLIE:
-            return "CONTROL_POINT_CHARLIE";
-        case CONTROL_POINT_DELTA:
-            return "CONTROL_POINT_DELTA";
-        case CONTROL_POINT_ECHO:
-            return "CONTROL_POINT_ECHO";
-        case CONTROL_POINT_COUNT:
-            return "CONTROL_POINT_COUNT";
         default:
             return "UNKNOWN";
     }
@@ -50,6 +29,8 @@ const char * setting_type_to_short_string(SettingType_t setting)
     {
         case SETTING_CONTROL_POINT:
             return "CP";     // Control Point
+        case SETTING_BEEP:
+            return "BEEP";
         case SETTING_EXIT:
             return "EXIT";
         case SETTING_COUNT:
@@ -103,6 +84,13 @@ esp_err_t settings_load(void)
         return ret;
     }
 
+    ret = storage_get_beep(&setting.beep);
+    if(ESP_OK != ret)
+    {
+        ESP_LOGE(__func__, "Impossible to load actual settings due to storage_get_beep error: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
     ESP_LOGI(__func__, "Settings loaded successfully");
     
     return ESP_OK;
@@ -117,6 +105,13 @@ esp_err_t settings_save(void)
     if(ESP_OK != ret)
     {
         ESP_LOGE(__func__, "Impossible to save actual settings due to storage_set_control_point error: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = storage_set_beep(setting.beep);
+    if(ESP_OK != ret)
+    {
+        ESP_LOGE(__func__, "Impossible to save actual settings due to storage_set_beep error: %s", esp_err_to_name(ret));
         return ret;
     }
 
@@ -142,6 +137,19 @@ void settings_next(void)
             display_set_string(DISPLAY_BLUE, control_point_to_short_string(setting.control_point));
             break;
         }
+
+        case SETTING_BEEP:
+        {
+            ESP_LOGI(__func__, "Actual value: %s", generic_enable_to_string(setting.beep));
+            display_set_string(DISPLAY_BLUE, generic_enable_to_string(setting.beep));
+            break;
+        }
+
+        case SETTING_EXIT:
+        {
+            display_set_string(DISPLAY_BLUE, "EXIT");
+            break;
+        }
         
         default:
         {
@@ -163,6 +171,14 @@ void settings_modify_current(void)
             setting.control_point = (setting.control_point + 1) % CONTROL_POINT_COUNT;
             ESP_LOGI(__func__, "Actual value: %s", control_point_to_string(setting.control_point));
             display_set_string(DISPLAY_BLUE, control_point_to_short_string(setting.control_point));
+            break;
+        }
+
+        case SETTING_BEEP:
+        {
+            setting.beep = !setting.beep;
+            ESP_LOGI(__func__, "Actual value: %s", generic_enable_to_string(setting.beep));
+            display_set_string(DISPLAY_BLUE, generic_enable_to_string(setting.beep));
             break;
         }
 

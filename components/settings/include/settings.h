@@ -17,18 +17,6 @@
 const char * setting_type_to_string(SettingType_t setting);
 
 /**
- * @brief Convert a ControlPoint_t enum value to a human-readable string.
- *
- * This function returns a constant string representing the name of the control point.
- * Useful for debugging, logging, or displaying the current control point selection.
- *
- * @param control_point The ControlPoint_t value to convert.
- * @return A constant null-terminated string describing the control point.
- *         Returns "UNKNOWN" if the value is out of range or invalid.
- */
-const char * control_point_to_string(ControlPoint_t control_point);
-
-/**
  * @brief Initialize the settings module.
  *
  * This function sets the current setting type to the default (SETTING_CONTROL_POINT)

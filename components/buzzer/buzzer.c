@@ -86,7 +86,13 @@ void buzzer_task(void * arg)
 
             case BUZZER_EVENT_BLINK:
             {
-                // Handle BLINK
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(100));
+                buzzer_off();
+                vTaskDelay(pdMS_TO_TICKS(100));
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(100));
+                buzzer_off();
                 break;
             }
 

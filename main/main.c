@@ -27,6 +27,7 @@
 #include "buttons.h"
 #include "app.h"
 #include "storage.h"
+#include "settings.h"
 #include "display.h"
 #include "buzzer.h"
 
@@ -71,6 +72,17 @@ esp_err_t app_init()
     else
     {
         ESP_LOGI(__func__, "STORAGE INIT OK");
+    }
+
+    partial_err = settings_init();
+    if(ESP_OK != partial_err)
+    {
+        ESP_LOGE(__func__, "Error calling settings_init: %s", esp_err_to_name(partial_err));
+        error = true;
+    }
+    else
+    {
+        ESP_LOGI(__func__, "SETTINGS INIT OK");
     }
 
     partial_err = display_init();

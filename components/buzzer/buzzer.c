@@ -2,6 +2,7 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "config.h"
+#include "settings.h"
 
 EventGroupHandle_t buzzer_event_group;
 
@@ -69,87 +70,94 @@ void buzzer_task(void * arg)
         EventBits_t bits = xEventGroupWaitBits(buzzer_event_group, BUZZER_EVENT_ALL, pdTRUE, pdFALSE, portMAX_DELAY);
         ESP_LOGI(__func__, "Event bits: %ld", bits);
 
-        switch (bits)
+        if(settings_get_beep())
         {
+            switch (bits)
+            {
+                
+                case BUZZER_EVENT_ON:
+                {
+                    buzzer_on();
+                    break;
+                }
+
+                case BUZZER_EVENT_OFF:
+                {
+                    buzzer_off();
+                    break;
+                }
+
+                case BUZZER_EVENT_BLINK:
+                {
+                    buzzer_on();
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                    buzzer_off();
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                    buzzer_on();
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                    buzzer_off();
+                    break;
+                }
+
+                case BUZZER_EVENT_HELLO:
+                {
+                    buzzer_on();
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                    buzzer_off();
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                    buzzer_on();
+                    vTaskDelay(pdMS_TO_TICKS(200));
+                    buzzer_off();
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                    buzzer_on();
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                    buzzer_off();
+                    break;
+                }
+
+                case BUZZER_EVENT_OK:
+                {
+                    buzzer_on();
+                    vTaskDelay(pdMS_TO_TICKS(200));
+                    buzzer_off();
+                    break;
+                }
+
+                case BUZZER_EVENT_SWITCH:
+                {
+                    buzzer_on();
+                    vTaskDelay(pdMS_TO_TICKS(200));
+                    buzzer_off();
+                    vTaskDelay(pdMS_TO_TICKS(200));
+                    buzzer_on();
+                    vTaskDelay(pdMS_TO_TICKS(200));
+                    buzzer_off();
+                    vTaskDelay(pdMS_TO_TICKS(200));
+                    buzzer_on();
+                    vTaskDelay(pdMS_TO_TICKS(200));
+                    buzzer_off();
+                    break;
+                }
+
+                case BUZZER_EVENT_FINISH:
+                {
+                    buzzer_on();
+                    vTaskDelay(pdMS_TO_TICKS(1000));
+                    buzzer_off();
+                    break;
+                }
+
+                default:
+                {
+                    // Unknown event
+                    break;
+                }
             
-            case BUZZER_EVENT_ON:
-            {
-                buzzer_on();
-                break;
             }
-
-            case BUZZER_EVENT_OFF:
-            {
-                buzzer_off();
-                break;
-            }
-
-            case BUZZER_EVENT_BLINK:
-            {
-                buzzer_on();
-                vTaskDelay(pdMS_TO_TICKS(100));
-                buzzer_off();
-                vTaskDelay(pdMS_TO_TICKS(100));
-                buzzer_on();
-                vTaskDelay(pdMS_TO_TICKS(100));
-                buzzer_off();
-                break;
-            }
-
-            case BUZZER_EVENT_HELLO:
-            {
-                buzzer_on();
-                vTaskDelay(pdMS_TO_TICKS(100));
-                buzzer_off();
-                vTaskDelay(pdMS_TO_TICKS(100));
-                buzzer_on();
-                vTaskDelay(pdMS_TO_TICKS(200));
-                buzzer_off();
-                vTaskDelay(pdMS_TO_TICKS(100));
-                buzzer_on();
-                vTaskDelay(pdMS_TO_TICKS(100));
-                buzzer_off();
-                break;
-            }
-
-            case BUZZER_EVENT_OK:
-            {
-                buzzer_on();
-                vTaskDelay(pdMS_TO_TICKS(200));
-                buzzer_off();
-                break;
-            }
-
-            case BUZZER_EVENT_SWITCH:
-            {
-                buzzer_on();
-                vTaskDelay(pdMS_TO_TICKS(200));
-                buzzer_off();
-                vTaskDelay(pdMS_TO_TICKS(200));
-                buzzer_on();
-                vTaskDelay(pdMS_TO_TICKS(200));
-                buzzer_off();
-                vTaskDelay(pdMS_TO_TICKS(200));
-                buzzer_on();
-                vTaskDelay(pdMS_TO_TICKS(200));
-                buzzer_off();
-                break;
-            }
-
-            case BUZZER_EVENT_FINISH:
-            {
-                buzzer_on();
-                vTaskDelay(pdMS_TO_TICKS(1000));
-                buzzer_off();
-                break;
-            }
-
-            default:
-            {
-                // Unknown event
-                break;
-            }
-        
+        }
+        else
+        {
+            // Beep is OFF, do nothing
         }
 
     }

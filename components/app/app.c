@@ -569,7 +569,7 @@ void app_task(void * arg)
                                 settings_save();
                                 current_state = APP_STATE_IDLE;
                                 ESP_LOGI(__func__, "EXITED SETTINGS");                                                            
-                                
+                                xEventGroupSetBits(buzzer_event_group, BUZZER_EVENT_SWITCH);
                                 app_enter_idle();
 
                             } 
@@ -676,8 +676,8 @@ void initial_setup_timer_callback()
 void app_enter_setting()
 {
     current_state = APP_STATE_SETTINGS;
-    settings_init();
     ESP_LOGI(__func__, "ENTERED SETTINGS");
+    settings_enter();
 }
 
 void app_enter_idle(void)

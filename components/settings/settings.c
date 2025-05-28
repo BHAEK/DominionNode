@@ -2,6 +2,7 @@
 #include "storage.h"
 #include "esp_log.h"
 #include "display.h"
+#include "buzzer.h"
 
 static SettingType_t current_setting_type;
 static Setting_t setting;
@@ -63,10 +64,14 @@ const char * control_point_to_short_string(ControlPoint_t control_point)
     }
 }
 
-void settings_init(void) 
+esp_err_t settings_init()
+{
+    return settings_load();
+}
+
+void settings_enter(void) 
 {
     current_setting_type = SETTING_CONTROL_POINT;
-    settings_load();
     ESP_LOGI(__func__, "Actual setting: %s", setting_type_to_string(current_setting_type));
     display_set_string(DISPLAY_RED, setting_type_to_short_string(current_setting_type));
     display_set_string(DISPLAY_BLUE, control_point_to_short_string(setting.control_point));
@@ -128,6 +133,8 @@ void settings_next(void)
     ESP_LOGI(__func__, "Actual setting: %s", setting_type_to_string(current_setting_type));
     display_set_string(DISPLAY_RED, setting_type_to_short_string(current_setting_type));
     
+    xEventGroupSetBits(buzzer_event_group, BUZZER_EVENT_OK);
+
     switch (current_setting_type)
     {
         
@@ -162,6 +169,8 @@ void settings_next(void)
 
 void settings_modify_current(void) 
 {
+
+    xEventGroupSetBits(buzzer_event_group, BUZZER_EVENT_OK);
     
     switch (current_setting_type) 
     {
@@ -197,7 +206,18 @@ void settings_modify_current(void)
 
 }
 
-SettingType_t settings_get_current(void) 
+SettingType_t settings_get_current()
 {
     return current_setting_type;
 }
+
+ControlPoint_t settings_get_control_point()
+{
+    return setting.control_point;
+}
+
+bool settings_get_beep()
+{
+    return setting.beep;
+}
+

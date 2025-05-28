@@ -10,6 +10,8 @@
 #define GPIO_7SEG_BLUE_CLK  15
 #define GPIO_7SEG_BLUE_SDO  16
 
+#define GPIO_BUZZER         21
+
 // GENERIC
 #define DEBOUNCE_DELAY_MS       200
 #define SETTINGS_HOLD_TIME_MS   3000

@@ -24,8 +24,13 @@
 #define BUTTON_TASK_STACK_DEPTH     2048
 #define APP_TASK_STACK_DEPTH        2048
 #define DISPLAY_TASK_STACK_DEPTH    2048
+#define BUZZER_TASK_STACK_DEPTH     2048
 
 // TASK PRIORITY
 #define BUTTON_TASK_PRIORITY        5
 #define APP_TASK_PRIORITY           3
 #define DISPLAY_TASK_PRIORITY       3
+#define BUZZER_TASK_PRIORITY        3     
+
+// OTHER
+#define FW_VERSION                  1.0

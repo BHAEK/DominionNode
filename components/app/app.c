@@ -8,6 +8,7 @@
 #include "storage.h"
 #include "settings.h"
 #include "display.h"
+#include "buzzer.h"
 
 QueueHandle_t app_event_queue = NULL;
 TimerHandle_t initial_setup_timer = NULL;
@@ -142,6 +143,11 @@ void app_task(void * arg)
         ESP_LOGE(__func__, "Setting state to APP_STATE_IDLE istantly!");
         current_state = APP_STATE_IDLE;
     }
+
+    display_set_string(DISPLAY_RED, "HI");
+    display_set_fw_version(DISPLAY_BLUE, FW_VERSION);
+
+    xEventGroupSetBits(buzzer_event_group, BUZZER_EVENT_HELLO);
 
     while (true) 
     {
@@ -715,7 +721,6 @@ void app_enter_running(Team_t team)
         
         }
         
-    
         default:
         {
             ESP_LOGE(__func__, "Invalid TEAM: %d", team);
@@ -736,6 +741,8 @@ void app_enter_running(Team_t team)
     {
         vTaskResume(display_task_handle);
     }
+
+    xEventGroupSetBits(buzzer_event_group, BUZZER_EVENT_SWITCH);
 
 }
 
@@ -796,7 +803,6 @@ void app_set_team(Team_t new_team)
             
         }
 
-    
         default:
         {
             ESP_LOGE(__func__, "Invalid TEAM: %d", new_team);
@@ -805,23 +811,34 @@ void app_set_team(Team_t new_team)
 
     }
 
+    xEventGroupSetBits(buzzer_event_group, BUZZER_EVENT_SWITCH);
+
 }
 
 void app_enter_finished(void)
 {
+    
     current_state = APP_STATE_FINISHED;
+    
     chrono_stop(&blue_chrono);
     chrono_stop(&red_chrono);
+    
     turn_all_leds_on();
+    
     if(display_task_handle)
     {
         vTaskSuspend(display_task_handle);
     }
+    
     int blue_seconds = chrono_get_seconds(&blue_chrono);
     int red_seconds = chrono_get_seconds(&red_chrono);
+    
     ESP_LOGI(__func__, "BLUE TEAM: %ds", blue_seconds);
     ESP_LOGI(__func__, "RED TEAM:  %ds", red_seconds);
     ESP_LOGI(__func__, "WIN %s TEAM!", blue_seconds >= red_seconds ? "BLUE" : "RED");
+    
+    xEventGroupSetBits(buzzer_event_group, BUZZER_EVENT_FINISH);
+
 }
 
 const char * app_state_to_string(AppState_t state)

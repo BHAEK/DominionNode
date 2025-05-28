@@ -2,6 +2,10 @@
 #define BUZZER_H
 
 #include "esp_err.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+
+extern EventGroupHandle_t buzzer_event_group;
 
 typedef enum 
 {

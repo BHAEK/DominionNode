@@ -310,3 +310,47 @@ esp_err_t display_set_string_dual(char * string)
     return ESP_OK;
 
 }
+
+esp_err_t display_set_fw_version(Display_t display, float fw_version)
+{
+    if (fw_version < 0.0f || fw_version >= 100.0f) {
+        ESP_LOGE(__func__, "Invalid firmware version: %.2f", fw_version);
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    tm1637_led_t *led = NULL;
+
+    switch (display) 
+    {
+        case DISPLAY_RED:
+            if (display_red == NULL) {
+                ESP_LOGE(__func__, "Display (RED) not initialized!");
+                return ESP_FAIL;
+            }
+            led = display_red;
+            break;
+
+        case DISPLAY_BLUE:
+            if (display_blue == NULL) {
+                ESP_LOGE(__func__, "Display (BLUE) not initialized!");
+                return ESP_FAIL;
+            }
+            led = display_blue;
+            break;
+
+        default:
+            ESP_LOGE(__func__, "Invalid DISPLAY: %d", display);
+            return ESP_ERR_INVALID_ARG;
+    }
+
+    // Convert version float to integer format (e.g., 1.23 -> 123)
+    int version_number = (int)(fw_version * 100.0f + 0.5f);  // rounded
+
+    // Dot at position 3 (from right): 1 << 3 == 0x08
+    const uint16_t dot_position = 0x08;
+
+    tm1637_set_number(led, version_number, false, dot_position);
+
+    return ESP_OK;
+    
+}

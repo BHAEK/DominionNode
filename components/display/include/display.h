@@ -115,4 +115,19 @@ esp_err_t display_set_string(Display_t display, char * string);
  *         - ESP_FAIL: One or both displays are not initialized.
  */
 esp_err_t display_set_string_dual(char * string);
+
+/**
+ * @brief Set the firmware version on the specified display.
+ *
+ * This function formats and displays a firmware version number in the format XX.YY
+ * on a 6-digit 7-segment TM1637 display.
+ *
+ * Example: A version 1.23 will be shown as " 01.23" (with a dot at the 3rd digit from right).
+ *
+ * @param display The display identifier (DISPLAY_RED or DISPLAY_BLUE).
+ * @param fw_version The firmware version as a float (e.g., 1.23).
+ * @return esp_err_t ESP_OK on success, or error code on failure.
+ */
+esp_err_t display_set_fw_version(Display_t display, float fw_version);
+
 #endif // DISPLAY_H

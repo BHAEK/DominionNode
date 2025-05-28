@@ -2,10 +2,10 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "config.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/event_groups.h"
 
 EventGroupHandle_t buzzer_event_group;
+
+void buzzer_task(void * arg);
 
 esp_err_t buzzer_init()
 {
@@ -35,6 +35,13 @@ esp_err_t buzzer_init()
         return ESP_FAIL;
     }
 
+    BaseType_t buzzer_task_error = xTaskCreate(buzzer_task, "buzzer", BUZZER_TASK_STACK_DEPTH, NULL, BUZZER_TASK_PRIORITY, NULL);
+    if(pdPASS != buzzer_task_error)
+    {
+        ESP_LOGE(__func__, "Failed to create buzzer task!");
+        return ESP_FAIL;
+    }
+
     return ret;
 
 }
@@ -60,19 +67,20 @@ void buzzer_task(void * arg)
     {
 
         EventBits_t bits = xEventGroupWaitBits(buzzer_event_group, BUZZER_EVENT_ALL, pdTRUE, pdFALSE, portMAX_DELAY);
+        ESP_LOGI(__func__, "Event bits: %ld", bits);
 
         switch (bits)
         {
             
             case BUZZER_EVENT_ON:
             {
-                // Handle ON
+                buzzer_on();
                 break;
             }
 
             case BUZZER_EVENT_OFF:
             {
-                // Handle OFF
+                buzzer_off();
                 break;
             }
 
@@ -84,25 +92,49 @@ void buzzer_task(void * arg)
 
             case BUZZER_EVENT_HELLO:
             {
-                // Handle HELLO
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(100));
+                buzzer_off();
+                vTaskDelay(pdMS_TO_TICKS(100));
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                buzzer_off();
+                vTaskDelay(pdMS_TO_TICKS(100));
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(100));
+                buzzer_off();
                 break;
             }
 
             case BUZZER_EVENT_OK:
             {
-                // Handle OK
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                buzzer_off();
                 break;
             }
 
             case BUZZER_EVENT_SWITCH:
             {
-                // Handle SWITCH
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                buzzer_off();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                buzzer_off();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(200));
+                buzzer_off();
                 break;
             }
 
             case BUZZER_EVENT_FINISH:
             {
-                // Handle FINISH
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(1000));
+                buzzer_off();
                 break;
             }
 

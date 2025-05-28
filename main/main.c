@@ -28,6 +28,7 @@
 #include "app.h"
 #include "storage.h"
 #include "display.h"
+#include "buzzer.h"
 
 esp_err_t app_init()
 {
@@ -83,6 +84,16 @@ esp_err_t app_init()
         ESP_LOGI(__func__, "DISPLAY INIT OK");
     }
 
+    partial_err = buzzer_init();
+    if(ESP_OK != partial_err)
+    {
+        ESP_LOGE(__func__, "Error calling buzzer_init: %s", esp_err_to_name(partial_err));
+        error = true;
+    }
+    else
+    {
+        ESP_LOGI(__func__, "BUZZER INIT OK");
+    }
     
     if(error)
     {

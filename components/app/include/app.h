@@ -21,6 +21,14 @@ typedef enum
     APP_STATE_FINISHED,
 } AppState_t;
 
+typedef enum
+{  
+    APP_TEAM_INVALID = -1,
+    APP_TEAM_RED,
+    APP_TEAM_BLUE,
+    APP_TEAM_COUNT,
+} Team_t;
+
 typedef enum 
 {
     // TIMERS

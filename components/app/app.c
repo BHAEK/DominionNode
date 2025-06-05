@@ -103,7 +103,7 @@ void app_task(void * arg);
  */
 void display_chrono_task(void * arg);
 
-AppState_t get_app_state(void)
+AppState_t app_get_state(void)
 {
     return current_state;
 }
@@ -839,6 +839,32 @@ void app_enter_finished(void)
     
     xEventGroupSetBits(buzzer_event_group, BUZZER_EVENT_FINISH);
 
+}
+
+int app_get_timer(Team_t team)
+{
+    if (team == APP_TEAM_RED)
+    {
+        return chrono_get_seconds(&red_chrono);
+    }
+    else if (team == APP_TEAM_BLUE)
+    {
+        return chrono_get_seconds(&blue_chrono);
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+void app_start_game()
+{
+    app_enter_idle();
+}
+
+void app_end_game()
+{
+    app_enter_finished();
 }
 
 const char * app_state_to_string(AppState_t state)

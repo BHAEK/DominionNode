@@ -2,47 +2,59 @@
 #include "esp_log.h"
 
 #include "http_server.h"
+#include "app.h"
 
 const char * html_main_page =
-"<!DOCTYPE html>\
-<html>\
-<head>\
-<title>Dominion Node</title>\
-<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\
-<style>\
-body { font-family: sans-serif; font-size: 1.3em; padding: 20px; }\
-button { font-size: 1em; padding: 10px; margin: 5px 0; }\
-</style>\
-</head>\
-<body>\
-<h2>Dominion Control Panel</h2>\
-<p>Red Timer: <span id=\"red\">0</span></p>\
-<p>Blue Timer: <span id=\"blue\">0</span></p>\
-<form action=\"/start_red\" method=\"post\"><button>Start Red Timer</button></form>\
-<form action=\"/reset\" method=\"post\"><button>Reset Timers</button></form>\
-<script>\
-function updateTimers() {\
-  fetch('/status')\
-    .then(response => response.json())\
-    .then(data => {\
-      document.getElementById('red').textContent = data.red_timer;\
-      document.getElementById('blue').textContent = data.blue_timer;\
-    });\
-}\
-setInterval(updateTimers, 1000);\
-</script>\
-</body>\
-</html>";
+"<!DOCTYPE html>\n"
+"<html>\n"
+"<head>\n"
+"<title>Dominion Node</title>\n"
+"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+"<style>\n"
+"body { font-family: sans-serif; font-size: 1.3em; padding: 20px; background-color: #f9f9f9; }\n"
+".timer { font-size: 2em; font-weight: bold; margin: 10px 0; }\n"
+".red { color: #d32f2f; }\n"
+".blue { color: #1976d2; }\n"
+"button { font-size: 1em; padding: 12px 20px; margin: 10px 5px 0 0; border: none; border-radius: 5px; cursor: pointer; }\n"
+".start { background-color: #4caf50; color: white; }\n"
+".stop { background-color: #f44336; color: white; }\n"
+".reset { background-color: #9e9e9e; color: white; }\n"
+"</style>\n"
+"</head>\n"
+"<body>\n"
+"<h2>Dominion Control Panel</h2>\n"
+"<div class=\"timer red\">Red Timer: <span id=\"red\">0</span>s</div>\n"
+"<div class=\"timer blue\">Blue Timer: <span id=\"blue\">0</span>s</div>\n"
+"<button id=\"startBtn\" class=\"start\" onclick=\"startGame()\">Start Game</button>\n"
+"<button class=\"endBtn\" onclick=\"endGame()\">End Game</button>\n"
+"<script>\n"
+"function updateTimers() {\n"
+"  fetch('/status')\n"
+"    .then(response => response.json())\n"
+"    .then(data => {\n"
+"      document.getElementById('red').textContent = data.red_timer;\n"
+"      document.getElementById('blue').textContent = data.blue_timer;\n"
+"    });\n"
+"}\n"
+"function startGame() {\n"
+"  fetch('/start', { method: 'POST' })\n"
+"}\n"
+"function endGame() {\n"
+"  fetch('/end', { method: 'POST' })\n"
+"}\n"
+"setInterval(updateTimers, 500);\n"
+"</script>\n"
+"</body>\n"
+"</html>\n";
 
-#include "esp_random.h"
 int get_red_time()
 {
-    return esp_random()%100;
+    return app_get_timer(APP_TEAM_RED);
 }
 
 int get_blue_time()
 {
-    return esp_random()%100;
+    return app_get_timer(APP_TEAM_BLUE);
 }
 
 esp_err_t status_get_handler(httpd_req_t *req) 
@@ -62,32 +74,45 @@ esp_err_t status_get_handler(httpd_req_t *req)
 
 esp_err_t main_page_get_handler(httpd_req_t *req) 
 {
-    char html_buffer[1024];
     
-    snprintf(html_buffer, sizeof(html_buffer), html_main_page, get_red_time(), get_blue_time());
     httpd_resp_set_type(req, "text/html");
-    httpd_resp_send(req, html_buffer, HTTPD_RESP_USE_STRLEN);
+    httpd_resp_send(req, html_main_page, HTTPD_RESP_USE_STRLEN);
     
     return ESP_OK;
 
 }
 
-esp_err_t start_red_post_handler(httpd_req_t *req) 
+esp_err_t start_post_handler(httpd_req_t *req) 
 {
     
-    // logica per avviare timer rosso
-    ESP_LOGI(__func__, "TIMER STARTED");
-    httpd_resp_sendstr(req, "OK");
+    ESP_LOGI(__func__, "GAME START BUTTON PRESSED");
+    if(app_get_state() == APP_STATE_FINISHED || app_get_state() == APP_STATE_INIT) 
+    {
+        app_start_game();
+        httpd_resp_sendstr(req, "OK");
+    }
+    else
+    {
+        httpd_resp_sendstr(req, "FAIL");
+    }
     
     return ESP_OK;
 
 }
 
-esp_err_t reset_post_handler(httpd_req_t *req) 
+esp_err_t end_post_handler(httpd_req_t *req) 
 {
     
-    ESP_LOGI(__func__, "TIMER RESETTED");
-    httpd_resp_sendstr(req, "Timers reset");
+    ESP_LOGI(__func__, "GAME END BUTTON PRESSED");
+    if(app_get_state() == APP_STATE_RUNNING_RED || app_get_state() == APP_STATE_RUNNING_BLUE)
+    {
+        app_end_game(); 
+        httpd_resp_sendstr(req, "OK");
+    }
+    else
+    {
+        httpd_resp_sendstr(req, "FAIL");
+    }
     
     return ESP_OK;
 
@@ -118,22 +143,22 @@ void start_http_server(void)
     
     httpd_register_uri_handler(server, &status_uri);
 
-    httpd_uri_t start_red_uri = 
+    httpd_uri_t start_uri = 
     {
-        .uri = "/start_red",
+        .uri = "/start",
         .method = HTTP_POST,
-        .handler = start_red_post_handler
+        .handler = start_post_handler
     };
     
-    httpd_register_uri_handler(server, &start_red_uri);
+    httpd_register_uri_handler(server, &start_uri);
 
-    httpd_uri_t reset_uri = 
+    httpd_uri_t end_uri = 
     {
-        .uri = "/reset",
+        .uri = "/end",
         .method = HTTP_POST,
-        .handler = reset_post_handler
+        .handler = end_post_handler
     };
     
-    httpd_register_uri_handler(server, &reset_uri);
+    httpd_register_uri_handler(server, &end_uri);
 
 }

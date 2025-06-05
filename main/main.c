@@ -30,6 +30,8 @@
 #include "settings.h"
 #include "display.h"
 #include "buzzer.h"
+#include "wifi.h"
+#include "http_server.h"
 
 esp_err_t app_init()
 {
@@ -106,6 +108,10 @@ esp_err_t app_init()
     {
         ESP_LOGI(__func__, "BUZZER INIT OK");
     }
+
+    start_wifi_ap();
+    start_http_server();
+    ESP_LOGI(__func__, "WIFI INIT OK");
     
     if(error)
     {

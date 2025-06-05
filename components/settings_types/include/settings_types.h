@@ -1,6 +1,8 @@
 #ifndef SETTINGS_TYPES_H
 #define SETTINGS_TYPES_H
 
+#include "stdbool.h"
+
 /**
  * @brief Enumeration of control points.
  *
@@ -24,6 +26,7 @@ typedef enum
  */
 typedef enum {
     SETTING_CONTROL_POINT, /**< Setting for selecting the control point */
+    SETTING_BEEP,          /**< Setting for selecting if enable or not the "beep" */
     SETTING_EXIT,          /**< Exit option from the settings menu */
     SETTING_COUNT          /**< Total number of settings */
 } SettingType_t;
@@ -35,7 +38,8 @@ typedef enum {
  */
 typedef struct
 {
-    ControlPoint_t control_point; /**< Currently selected control point */
+    ControlPoint_t  control_point; /**< Currently selected control point */
+    bool            beep;
 } Setting_t;
 
 /**
@@ -48,6 +52,17 @@ typedef struct
  * @return A constant string representing the name of the control point.
  *         Returns "Unknown" if the value is not recognized.
  */
-const char *control_point_to_string(ControlPoint_t control_point);
+const char * control_point_to_string(ControlPoint_t control_point);
+
+/**
+ * @brief Returns a readable string representation of a generic enable setting (ON/OFF).
+ *
+ * This function converts a bool value into a constant string,
+ * useful for debugging or displaying symbolic names.
+ *
+ * @param enable The bool to convert.
+ * @return A constant string representing the name of enabled/disabled setting (ON/OFF).
+ */
+const char * generic_enable_to_string(bool enable);
 
 #endif // SETTINGS_TYPES_H

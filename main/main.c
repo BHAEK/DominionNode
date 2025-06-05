@@ -27,7 +27,9 @@
 #include "buttons.h"
 #include "app.h"
 #include "storage.h"
-#include "tm1637.h"
+#include "settings.h"
+#include "display.h"
+#include "buzzer.h"
 
 esp_err_t app_init()
 {
@@ -72,10 +74,38 @@ esp_err_t app_init()
         ESP_LOGI(__func__, "STORAGE INIT OK");
     }
 
-    tm1637_led_t * red_7seg;
-    red_7seg = tm1637_init(GPIO_7SEG_RED_CLK, GPIO_7SEG_RED_SDO);
-    tm1637_set_number(red_7seg, 1234, false, 0);
+    partial_err = settings_init();
+    if(ESP_OK != partial_err)
+    {
+        ESP_LOGE(__func__, "Error calling settings_init: %s", esp_err_to_name(partial_err));
+        error = true;
+    }
+    else
+    {
+        ESP_LOGI(__func__, "SETTINGS INIT OK");
+    }
 
+    partial_err = display_init();
+    if(ESP_OK != partial_err)
+    {
+        ESP_LOGE(__func__, "Error calling display_init: %s", esp_err_to_name(partial_err));
+        error = true;
+    }
+    else
+    {
+        ESP_LOGI(__func__, "DISPLAY INIT OK");
+    }
+
+    partial_err = buzzer_init();
+    if(ESP_OK != partial_err)
+    {
+        ESP_LOGE(__func__, "Error calling buzzer_init: %s", esp_err_to_name(partial_err));
+        error = true;
+    }
+    else
+    {
+        ESP_LOGI(__func__, "BUZZER INIT OK");
+    }
     
     if(error)
     {
@@ -110,5 +140,6 @@ void app_main(void)
     {
         signal_fatal_error(INIT_ERROR);
     }
+
 
 }

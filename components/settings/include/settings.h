@@ -17,16 +17,15 @@
 const char * setting_type_to_string(SettingType_t setting);
 
 /**
- * @brief Convert a ControlPoint_t enum value to a human-readable string.
+ * @brief Initialize application settings.
  *
- * This function returns a constant string representing the name of the control point.
- * Useful for debugging, logging, or displaying the current control point selection.
+ * This function initializes the application settings by loading them
+ * from non-volatile storage (NVS). It should be called during system
+ * startup to restore the last saved configuration.
  *
- * @param control_point The ControlPoint_t value to convert.
- * @return A constant null-terminated string describing the control point.
- *         Returns "UNKNOWN" if the value is out of range or invalid.
+ * @return ESP_OK on success, or an appropriate error code on failure.
  */
-const char * control_point_to_string(ControlPoint_t control_point);
+esp_err_t settings_init(void);
 
 /**
  * @brief Initialize the settings module.
@@ -34,7 +33,7 @@ const char * control_point_to_string(ControlPoint_t control_point);
  * This function sets the current setting type to the default (SETTING_CONTROL_POINT)
  * and loads the saved settings from persistent storage.
  */
-void settings_init(void);
+void settings_enter(void);
 
 /**
  * @brief Load the settings from persistent storage.
@@ -75,10 +74,33 @@ void settings_next(void);
 void settings_modify_current(void);
 
 /**
- * @brief Get the currently selected setting type.
+ * @brief Get the type of the current active settings.
  *
- * @return The current SettingType_t representing the selected setting.
+ * This function returns the type of the currently active setting,
+ * as stored in the runtime state.
+ *
+ * @return The current SettingType_t value.
  */
 SettingType_t settings_get_current(void);
+
+/**
+ * @brief Get the current control point from the runtime settings.
+ *
+ * This function returns the value of the control point currently stored
+ * in the in-memory settings structure.
+ *
+ * @return Current control point.
+ */
+ControlPoint_t settings_get_control_point(void);
+
+/**
+ * @brief Get the current beep status from the runtime settings.
+ *
+ * This function returns the value of the beep flag currently stored
+ * in the in-memory settings structure.
+ *
+ * @return true if beep is ON, false otherwise.
+ */
+bool settings_get_beep(void);
 
 #endif // SETTINGS_H

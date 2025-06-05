@@ -1,6 +1,6 @@
 #include "settings_types.h"
 
-const char *control_point_to_string(ControlPoint_t control_point) 
+const char * control_point_to_string(ControlPoint_t control_point) 
 {
     switch (control_point) 
     {
@@ -11,5 +11,17 @@ const char *control_point_to_string(ControlPoint_t control_point)
         case CONTROL_POINT_ECHO:    return "Echo";
         case CONTROL_POINT_NONE:    return "None";
         default:                    return "Unknown";
+    }
+}
+
+const char * generic_enable_to_string(bool enable)
+{
+    if(enable)
+    {
+        return "ON";
+    }
+    else
+    {
+        return "OFF";
     }
 }

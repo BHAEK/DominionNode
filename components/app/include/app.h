@@ -88,6 +88,40 @@ void app_task(void* arg);
  *
  * @return The current AppState_t value representing the application's state.
  */
-AppState_t get_app_state(void);
+AppState_t app_get_state(void);
+
+/**
+ * @brief Returns the current timer value (in seconds) for the specified team.
+ *
+ * This function retrieves the number of elapsed seconds from the timer
+ * associated with the given team (red or blue). If the team is not valid,
+ * the function returns -1.
+ *
+ * @param team The team for which to retrieve the timer value.
+ *             Must be either APP_TEAM_RED or APP_TEAM_BLUE.
+ *
+ * @return The number of seconds elapsed for the specified team's timer,
+ *         or -1 if the team is invalid.
+ */
+int app_get_timer(Team_t team);
+
+/**
+ * @brief Starts the game logic.
+ *
+ * Transitions the application state into the idle state,
+ * which marks the beginning of a new game session. This
+ * prepares timers and internal states for gameplay.
+ */
+void app_start_game(void);
+
+/**
+ * @brief Ends the game logic.
+ *
+ * Transitions the application state into the finished state,
+ * marking the end of the game session. Timers are stopped
+ * and no further game activity is expected until restarted.
+ */
+void app_end_game(void);
+
 
 #endif //APP_H
